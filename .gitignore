@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+synthora-24ba8-firebase-adminsdk-fbsvc-090a7a5418.json
+# Build / Cache
+dist/
+build/
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db

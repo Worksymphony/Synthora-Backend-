@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.11.0",
+    "compromise": "^14.14.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.4.0",
+    "mammoth": "^1.10.0",
+    "multer": "^2.0.2",
+    "nlp-compromise": "^7.0.0",
+    "nodemailer": "^7.0.5",
+    "openai": "^5.12.2",
+    "pdf-parse": "^1.1.1",
+    "retext": "^9.0.0",
+    "retext-intensify": "^7.0.0",
+    "retext-keywords": "^8.0.2",
+    "retext-simplify": "^8.0.0",
+    "textract": "^0.20.0",
+    "unified": "^11.0.5"
+  }
+}
