@@ -71,10 +71,11 @@ const { uid, userid, companyId } = req.body;
 
    // Check the AI limit
    if (currentCompanyUsage >= companyLimit) {
-   return res.status(200).json({
+   return {
     status: "limit_exceeded",
-    message: "Company AI token limit exceeded."
-  });
+    data: null,
+    warning:null,
+   };
    }
 
    const jdEmd = jdSnap.data().embedding;
@@ -132,6 +133,8 @@ const threshold = mean + 0.5 * stdDev;
 
    // Calculate total tokens used for this single operation
    const totalTokensForThisMatch = AIscoring.reduce((acc, current) => acc + current.score.usage, 0);
+   const sortedAIscoring = AIscoring.sort((a, b) => b.score.parsed.score - a.score.parsed.score);
+
   const newCompanyUsage = currentCompanyUsage + totalTokensForThisMatch;
    // Check limit again before writing (just in case of parallel requests)
    let warning = null;
@@ -149,22 +152,41 @@ if (newCompanyUsage > companyLimit) {
    // Return data to be sent as the API response
    return {
     status: "success",
-    data: AIscoring,
+    data: sortedAIscoring,
     warning
    };
   }); // End of transaction
 
-  if (aiUsageTransaction.status === "limit_exceeded") {
-   return res.status(403).json({ error: aiUsageTransaction.message });
-  }
-
   
-  res.status(200).json({ message: "Received successfully", data: aiUsageTransaction.data,warning:aiUsageTransaction.warning });
+  if (aiUsageTransaction.status==="limit_exceeded"){res.status(200).json({
+    status: "limit_exceeded",
+    message: "Company AI token limit exceeded."
+    
+  })}
+  else{
+    res.status(200).json({ message: "Received successfully", data: aiUsageTransaction.data,warning:aiUsageTransaction.warning });
+  }
+  
+  
  } catch (error) {
   console.error(error);
   res.status(500).json({ error: "Internal Server Error" });
  }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 exports.matchingcontrollerRecent = async (req, res) => { try {
  // Extract required data from the request body
 const { uid, userid, companyId } = req.body;

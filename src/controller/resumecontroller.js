@@ -20,38 +20,41 @@ const db = admin.firestore();
 exports.getAllMetadata = async (req, res) => {
   try {
     let { pageSize = 10, pageToken, search, skill, location, sector, sortBy } = req.query;
+
     const capitalizeFirstLetter = (str) => str.charAt(0).toUpperCase() + str.slice(1);
     const toLowerCaseString = (str) => str.toLowerCase();
-    if (location) location = capitalizeFirstLetter(location);
-    if (sector) sector = capitalizeFirstLetter(sector);
-    if (search) search=toLowerCaseString(search)
-    
+
+    if (location) location = toLowerCaseString(location);
+    if (sector) sector = toLowerCaseString(sector);
+    if (search) search = toLowerCaseString(search);
+
     pageSize = parseInt(pageSize, 10);
 
     let queryRef = db.collection("resumes");
 
-    // 🔍 Apply filters
-    if (search) {
-      queryRef = queryRef
-        .orderBy("name")
-        .startAt(search)
-        .endAt(search + "\uf8ff");
-    }
+    // 🔍 Filters
     if (skill) {
-      queryRef =  queryRef = queryRef.where("skills", "array-contains", skill);
+      queryRef = queryRef.where("skills", "array-contains", skill);
     }
     if (location) {
-      queryRef = queryRef.where("location", ">=", location).where("location", "<=", location + "\uf8ff");
+      queryRef = queryRef
+        .where("location", ">=", location)
+        .where("location", "<=", location + "\uf8ff");
     }
     if (sector) {
-      queryRef = queryRef.where("sector", ">=", sector).where("sector", "<=", sector + "\uf8ff");
+      queryRef = queryRef
+        .where("sector", ">=", sector)
+        .where("sector", "<=", sector + "\uf8ff");
     }
 
-    // 📌 Sort
-    if (sortBy === "recent") {
+    // 📌 Sorting
+    if (search) {
+      queryRef = queryRef.orderBy("name").startAt(search).endAt(search + "\uf8ff");
+    } else if (sortBy === "recent") {
       queryRef = queryRef.orderBy("uploadedAt", "desc");
-    } else if (!search && !skill && !location && !sector) {
-      queryRef = queryRef.orderBy("uploadedAt");
+    } else {
+      // default A → Z
+      queryRef = queryRef.orderBy("name", "asc");
     }
 
     // 📌 Pagination
@@ -62,6 +65,7 @@ exports.getAllMetadata = async (req, res) => {
       }
     }
 
+    // 📌 Limit
     queryRef = queryRef.limit(pageSize);
 
     const snapshot = await queryRef.get();
@@ -73,13 +77,14 @@ exports.getAllMetadata = async (req, res) => {
 
     const nextPageToken =
       snapshot.size > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null;
-    
+
     res.status(200).json({ metadata, nextPageToken });
   } catch (error) {
     console.error("Error fetching resumes:", error);
     res.status(500).json({ error: "Failed to fetch resumes." });
   }
 };
+
 
 
 

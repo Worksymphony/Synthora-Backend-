@@ -95,7 +95,7 @@ Extract the following from this resume text in pure JSON:
 Text:
 ${text}
 
-Return ONLY the JSON object, no explanations, no markdown.and name Should be in small letters  and skills should be array and sector should be one work and location should be city only and correctly determine Gender Male or Female
+Return ONLY the JSON object, no explanations, no markdown.and name Should be in small letters  and skills should be array and sector should be one work and location should be city only and both sector and location should be lowercase and correctly determine Gender Male or Female
 `;
 
   // 1️⃣ Gemini
@@ -150,18 +150,25 @@ async function extractJDMetadataFromText(text) {
   console.log("📝 JD text length:", text.length);
 
   const prompt = `
-Extract the following from this job description text in pure JSON:
+You are an information extraction system. 
+From the given job description text, extract ONLY the following fields in pure JSON:
+
 {
-  "JobTitle": "",
-  "ClientName": "",
-  "Location": "",
-  "SalaryRange": "",
-  "JobDescription": ""
+  "JobTitle": "",        // clear job title (e.g., "Software Engineer"). If not found, leave empty string.
+  "ClientName": "",      // company/client name (short and clean). If not found, leave empty string.
+  "Location": "",        // city only, in lowercase. If multiple locations, pick the first city mentioned. If not found, leave empty string.
+  "SalaryRange": "",     // numeric or text salary info (e.g., "8-12 LPA", "$80k-$100k/year"). If not found, leave empty string.
+  "JobDescription": ""   // concise summary (4–5 sentences max) of the responsibilities/requirements. If not found, leave empty string.
 }
+
 Text:
 ${text}
 
-Return ONLY the JSON object, no explanations, no markdown.
+Rules:
+- Return ONLY the JSON object. No markdown, no explanations, no extra text.
+- Do not invent information that isn’t in the text.
+- Keep formatting clean and consistent.
+-remember if the cliet name is TMIBASL then make it Tata Motors Insurance Broking &Advisory Services Limited.
 `;
 
   // 1️⃣ Gemini
