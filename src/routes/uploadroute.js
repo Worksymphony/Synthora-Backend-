@@ -7,6 +7,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 router.post("/", upload.array("files"), uploadController.uploadToFirebase);
-router.patch("/hiringstatus/:id",uploadController.updatehiringstatus)
+router.patch("/hiringstatus/:id",uploadController.updateHiringStatus)
 
 module.exports = router;

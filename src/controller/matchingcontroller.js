@@ -94,7 +94,7 @@ const { uid, userid, companyId } = req.body;
    }));
      const alreadyProcessed = jdSnap.data().neglectedResumes || [];
         
-      console.log("AllReady Processed ",alreadyProcessed)  
+      
 
       resumes = resumes.filter(r => !alreadyProcessed.includes(r.id));
 
@@ -219,10 +219,11 @@ const { uid, userid, companyId } = req.body;
 
    // Check the AI limit
    if (currentCompanyUsage >= companyLimit) {
-   return res.status(200).json({
+   return {
     status: "limit_exceeded",
-    message: "Company AI token limit exceeded."
-  });
+    data: null,
+    warning:null,
+   };;
    }
 
    const jdEmd = jdSnap.data().embedding;
@@ -237,15 +238,33 @@ const { uid, userid, companyId } = req.body;
     const oneHourAgo = admin.firestore.Timestamp.fromDate(
           new Date(Date.now() - 60 * 60 * 1000)
         );
+
+    const tagsSnap = await db
+  .collection("resumeAssignments").where("recruiterId","==",userid)
+  .where("companyId", "==", companyId)   // Only this company's uploads
+  .where("taggedAt", ">", oneHourAgo)    // Only recent uploads
+  .get(); 
+  
+  const taggedResumeIds = tagsSnap.docs.map(doc => doc.data().resumeId);
+
+  if (taggedResumeIds.length===0){
+    return {
+    status: "Not Found",
+    data: null,
+    warning:null,
+   };
+  }
     const resumesSnap = await db
-          .collection("resumes")
-          .where("uploadedAt", ">", oneHourAgo)
-          .get()
+        .collection("resumes")
+        .where(admin.firestore.FieldPath.documentId(), "in", taggedResumeIds)
+        .get();
+
+
    let resumes = resumesSnap.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
    }));
-   console.log("Recent wale",resumes)
+   
    
      const alreadyProcessed = jdSnap.data().neglectedResumes|| [];
         
@@ -310,12 +329,21 @@ if (newCompanyUsage > companyLimit) {
    };
   }); // End of transaction
 
-  if (aiUsageTransaction.status === "limit_exceeded") {
-   return res.status(403).json({ error: aiUsageTransaction.message });
+if (aiUsageTransaction.status==="limit_exceeded"){res.status(200).json({
+    status: "limit_exceeded",
+    message: "Company AI token limit exceeded."
+    
+  })}
+ else if(aiUsageTransaction.status==="Not Found"){
+  res.status(200).json({
+    status: "Not Found",
+    message: "No Recent Candidate",
+    
+  })
+ } 
+  else{
+    res.status(200).json({ message: "Received successfully", data: aiUsageTransaction.data,warning:aiUsageTransaction.warning });
   }
-
-  
-  res.status(200).json({ message: "Received successfully", data: aiUsageTransaction.data,warning:aiUsageTransaction.warning });
  } catch (error) {
   console.error(error);
   res.status(500).json({ error: "Internal Server Error" });

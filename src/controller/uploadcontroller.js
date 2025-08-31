@@ -7,10 +7,11 @@ const db = admin.firestore();
 exports.uploadToFirebase = async (req, res) => {
   try {
     const files = req.files;
-    const recruiterId = req.body.recuiter;   // recruiter id (optional)
+    const recruiterId = req.body.recruiterId;
+    const recruitername=req.body.recruitername;   // recruiter id (optional)
     const companyId = req.body.companyId;
     const companyname=req.body.companyname; // company name / id
-
+    
     if (!files || files.length === 0) {
       return res.status(400).json({ message: "No files uploaded." });
     }
@@ -90,6 +91,7 @@ exports.uploadToFirebase = async (req, res) => {
               resumeId: resumeDocId,
               companyId,
               companyname,
+              recruitername,
               recruiterId,
               locked: true,
               taggedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -115,34 +117,35 @@ exports.uploadToFirebase = async (req, res) => {
 };
 
 
-exports.updatehiringstatus=async(req,res)=>{
+exports.updateHiringStatus = async (req, res) => {
   try {
-    const candId=req.params.id
-    const status=req.body
+    const candId = req.params.id; // resumeId
+    const { hiringstatus, companyId } = req.body;
     
-    const CandRef=await db.collection("resumes").doc(candId)
-    const candSnap = await CandRef.get();
-    const oldData = candSnap.data();
-    const oldStatus = oldData.hiringstatus;
+    // Find the assignment for this resume + company
+    const assignmentQuery = await db
+      .collection("resumeAssignments")
+      .where("resumeId", "==", candId)
+      .where("companyId", "==", companyId)
+      .limit(1)
+      .get();
 
-    if (!candSnap.exists) {
-      return res.status(404).json({ message: "Candidate not found" });
+    if (assignmentQuery.empty) {
+      return res.status(404).json({ message: "Assignment not found" });
     }
-    CandRef.update({
-      hiringstatus:status.hiringstatus,
+
+    const assignmentDoc = assignmentQuery.docs[0].ref;
+
+    // Update hiring status only for this company's assignment
+    await assignmentDoc.update({
+      hiringstatus,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    })
-    //stepup mail first then uncomment it 
-    //  if (oldStatus !== status.hiringstatus) {
-    //   await sendCandidateEmail(
-    //     oldData.email, // assuming resumes doc has `email`
-    //     hiringstatus,
-    //     oldData.name   // assuming resumes doc has `name`
-    //   );
-    // }
-    return res.status(200).json({ message: "Candidate hiring process updated successfully" });
+    });
+
+    return res.status(200).json({ message: "Hiring status updated successfully" });
   } catch (error) {
-    console.error("Error updating job:", error);
+    console.error("Error updating hiring status:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
+
