@@ -27,7 +27,7 @@ exports.getAllMetadata = async (req, res) => {
     if (location) location = toLowerCaseString(location);
     if (sector) sector = toLowerCaseString(sector);
     if (search) search = toLowerCaseString(search);
-
+    if (skill) skill=toLowerCaseString(skill)
     pageSize = parseInt(pageSize, 10);
 
     let queryRef = db.collection("resumes");

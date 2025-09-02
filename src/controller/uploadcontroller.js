@@ -8,15 +8,16 @@ exports.uploadToFirebase = async (req, res) => {
   try {
     const files = req.files;
     const recruiterId = req.body.recruiterId;
-    const recruitername=req.body.recruitername;   // recruiter id (optional)
+    const recruitername = req.body.recruitername;
     const companyId = req.body.companyId;
-    const companyname=req.body.companyname; // company name / id
-    
+    const companyname = req.body.companyname;
+
     if (!files || files.length === 0) {
       return res.status(400).json({ message: "No files uploaded." });
     }
 
     const uploadResults = [];
+    const failedResults = []; // 👈 track failures
 
     for (const file of files) {
       try {
@@ -30,13 +31,29 @@ exports.uploadToFirebase = async (req, res) => {
         } else if (ext === ".doc") {
           text = await extractTextFromDoc(file.buffer);
         } else {
+          failedResults.push({
+            name: file.originalname,
+            reason: `Unsupported file type: ${ext}`,
+          });
           continue;
         }
 
-        if (!text || text.trim().length < 50) continue;
+        if (!text || text.trim().length < 50) {
+          failedResults.push({
+            name: file.originalname,
+            reason: "Text extraction failed or file too short",
+          });
+          continue;
+        }
 
         const metadata = await extractMetadataFromText(text);
-        if (!metadata.email) continue;
+        if (!metadata.email) {
+          failedResults.push({
+            name: file.originalname,
+            reason: "Could not detect email in resume",
+          });
+          continue;
+        }
 
         // 🔍 check if resume already exists
         const querySnapshot = await db
@@ -79,7 +96,7 @@ exports.uploadToFirebase = async (req, res) => {
           resumeDocId = docRef.id;
         }
 
-        // ✅ If uploaded by recruiter → add assignment mapping
+        // ✅ recruiter assignment
         if (recruiterId && companyname) {
           const assignRef = db
             .collection("resumeAssignments")
@@ -102,19 +119,27 @@ exports.uploadToFirebase = async (req, res) => {
         uploadResults.push({ name: file.originalname, url: publicUrl });
       } catch (innerError) {
         console.error(`Error processing file ${file.originalname}:`, innerError);
-        continue;
+        failedResults.push({
+          name: file.originalname,
+          reason: innerError.message || "Unknown error",
+        });
       }
     }
 
     res.status(200).json({
       message: "Processing completed.",
       uploaded: uploadResults,
+      failed: failedResults, 
     });
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ message: "Error uploading files", error: error.message });
+    res.status(500).json({
+      message: "Error uploading files",
+      error: error.message,
+    });
   }
 };
+
 
 
 exports.updateHiringStatus = async (req, res) => {
