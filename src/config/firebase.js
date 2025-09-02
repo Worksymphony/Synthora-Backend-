@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const serviceAccount = require("../synthora-24ba8-firebase-adminsdk-fbsvc-090a7a5418.json");
+const serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
