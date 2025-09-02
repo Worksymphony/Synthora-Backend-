@@ -115,7 +115,7 @@ const stdDev = Math.sqrt(variance);
 const threshold = mean + 0.5 * stdDev; 
    const filteredResumes = scoredResumes.filter(resume => resume.score >= threshold);
    const topResumes = filteredResumes.sort((a, b) => b.score - a.score);
-   const shortlistedResumes = topResumes.slice(0, 3);
+   const shortlistedResumes = topResumes.slice(0, 10);
    // Step 5: Get resume texts for AI scoring
  
    const resumeTexts = await getResumeTexts(shortlistedResumes);

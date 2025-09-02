@@ -1,16 +1,19 @@
-async function getEmbedding(text) {
-  const response = await fetch("https://embedding-model-87ae.onrender.com/embed", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
-  });
+let extractor;
 
-  if (!response.ok) {
-    throw new Error(`Embedding API error: ${response.statusText}`);
+async function loadPipeline() {
+  if (!extractor) {
+    const { pipeline } = await import("@xenova/transformers");
+    extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
   }
+  return extractor;
+}
 
-  const data = await response.json();
-  return data.vector; // store this in Firestore
+async function getEmbedding(text) {
+  const extractor = await loadPipeline();
+  console.log("embedding called")
+  const output = await extractor(text, { pooling: "mean", normalize: true });
+  
+  return Array.from(output.data);
 }
 
 module.exports = { getEmbedding };
