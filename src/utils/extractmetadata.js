@@ -157,8 +157,8 @@ From the given job description text, extract ONLY the following fields in pure J
   "JobTitle": "",        // clear job title (e.g., "Software Engineer"). If not found, put No Job title .
   "ClientName": "",      // company/client name (short and clean). If not found, put No Client Name.
   "Location": "",        // city only, in lowercase. If multiple locations, pick the first city mentioned. If not found, put No Location.
-  "SalaryRange": "",     // numeric or text salary info (e.g., "8-12 LPA", "$80k-$100k/year"). If not found, put No SalaryRange.
-  "JobDescription": ""   // concise summary (4–5 sentences max) of the responsibilities/requirements. If not found, put No JobDescription.
+  "SalaryRange": "",     // numeric or text salary info (e.g., "8-12 LPA", "$80k-$100k/year"). If not found, put No Salary Range.
+  "JobDescription": ""   // concise summary (4–5 sentences max) of the responsibilities/requirements. If not found, put No Job Description.
 }
 
 Text:
